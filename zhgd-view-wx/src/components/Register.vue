@@ -1,5 +1,8 @@
 <template>
   <div id="Register" class="register">
+    <div v-if="isLoging" class="model-div" >
+      <img src="../images/loading.gif" alt="">
+    </div>
     <div class="register-main">
       <form @submit.prevent="submit">
         <tr class="field">
@@ -75,13 +78,12 @@
           <td class="tdwid imglist imgcontent rigtd">
             <div class="picadd imgdiss">
               <img src="../images/iconfont-tianjia.png" alt="" />
-              <div v-if="!isiOS()">
+              <div v-if="!isiOS()" style="width:100%;height:100%;">
                 <input  type="file" id="upload" accept="image/*" capture="camera"  @change="upload">
               </div>
-              <div  v-else>
+              <div  v-else style="width:100%;height:100%;">
                 <input  type="file" id="upload" accept="image"  @change="upload">
               </div>
-              <label for="upload"></label>
             </div>
           </td>
         </tr>
@@ -115,6 +117,7 @@
     name: 'Register',
     data(){
       return {
+        isLoging: false,
         site:"",
         jobOrder:"",
         assetPosition:"",
@@ -251,9 +254,14 @@
         }
       },
       postImg (result,file) {
+        this.isLoging = true;
         this.$http.post('/test/project/attachment/createImage'+window.times,
           {figure:result},{
-            emulateJSON:true
+            emulateJSON:true,
+            before:function(xhr)
+            {
+
+            }
 
           })
           .then(
@@ -265,15 +273,16 @@
               picname = file.name;
 
               var content = $(".imgcontent");
-              content.prepend("<div filename="+picname+" fileid="+picid+" style='padding:0.1rem;width: 1.4rem;height: 1.4rem;position: relative;' class='show imgdiss'><Icon type='close' class='delimg'  style='position:absolute;font-size:0.4rem;top:0rem;right:0.14rem;color:red;'>x</Icon><img style='width:1.2rem;height:1.2rem;' class='pictures' src="+result+" alt=''></div>");
-              console.log("imgcontent",$(".imgcontent"));
-              var imgcnt = $(".imgcontent").find(".show"),
+              content.prepend("<div filename="+picname+" fileid="+picid+" style='padding:0.1rem;width: 1.4rem;height: 1.4rem;position: relative;' class='show imgdiss'><Icon type='close' class='delimg'  style='position:absolute;font-size:0.4rem;top:0.2rem;right:0.14rem;color:red;'>x</Icon><img style='width:1.2rem;height:1.2rem;' class='pictures' src="+result+" alt=''></div>");
+              var imgcnt = $(".imgcontent").find("[fileid]"),
+                  imgcntname = $(".imgcontent").find("[filename]"),
                 imgid,imgname;
-              console.log("imgcnt",imgcnt.length);
-              console.log(imgcnt.attr("fileid"))
               for(var i = 0; i < imgcnt.length; i++)
               {
                 imgid += ","+imgcnt.eq(i).attr("fileid");
+              }
+              for(var i = 0; i < imgcntname.length; i++)
+              {
                 imgname += ","+imgcnt.eq(i).attr("filename");
               }
               imgid = imgid.split(",");
@@ -283,6 +292,7 @@
 
               $(".imgcontent").attr("imgid",imgid);
               $(".imgcontent").attr("imgname",imgname);
+              this.isLoging = false;
               let sendData = {
                 attachName:file.name,
                 attachType:file.type,
@@ -293,39 +303,38 @@
               this.$http.post('/test/project/attachment/createFileInfo'+window.times,sendData)
                 .then(function(data){
                   $(".delimg").on('click',function(){
+                    $(this).parent(".show").css("display","none").removeAttr("filename").removeAttr("fileid");
 
-                    this.$http.post('/test/project/attachment/deleteFileById'+window.times,{id:picid}).
-                    then(
-                      function(response){
-                        console.log(response)
+                    var imgcnt = $(".imgcontent").find("[fileid]"),
+                        imgcntname = $(".imgcontent").find("[filename]"),
+                      imgid,imgname;
+                      if(imgcnt.length > 0){
+                        for(var i = 0; i < imgcnt.length; i++)
+                        {
+                          imgid += ","+imgcnt.eq(i).attr("fileid");
+                        }
+                        for(var i = 0; i < imgcntname.length; i++)
+                        {
+                          imgname += ","+imgcnt.eq(i).attr("filename");
+                        }
+                        imgid = imgid.split(",");
+                        imgname = imgname.split(",");
+                        imgid.shift();
+                        imgname.shift();
+
+                        $(".imgcontent").attr("imgid",imgid);
+                        $(".imgcontent").attr("imgname",imgname);
                       }
-                    )
-                console.log("89",$(this)) ;
-                  // var ses = window.headers();
-                  // $.ajax({
-                  //   url:'/test/project/attachment/deleteFileById'+window.times,
-                  //   type:'post',
-                  //   data:{id:picid},
-                    // beforeSend: function(xhr)
-                    // {
-                    // 	xhr.setRequestHeader("authorization",ses);
-                    // 	xhr.setRequestHeader("If-Modified-Since","0");
-                    // 	xhr.setRequestHeader("Cache-Control","no-cache");
-                    //
-                    // },
-                      // success:function(data)
-                      // {
-                      //   console.log($(this));
-                      //   console.log($(".delimg"));
-                        $(this).parent(".show").css("display","none");
-                    //   }
-                    // })
+                      else{
+                        $(".imgcontent").removeAttr("imgid");
+                        $(".imgcontent").removeAttr("imgname");
+                      }
                 })
                 },
                   function(data){})
             },
             function(response){
-              console.log(response);
+
             }
           );
 
@@ -579,6 +588,47 @@
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
   @import "../css/register.css";
+  .model-div{
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    background: #000000;
+    z-index: 11111;
+    opacity: 0.4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .model-div img{
+    width:1rem;
+    height: 1rem;
+  }
+  .model-pic{
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    border-radius: 0.2rem;
+    /* line-height: 100%; */
+    display: flex;
+    align-items: center;
+    background: white;
+    z-index: 999;
+    opacity: 0.6;
+     display: none;
+  }
+  .model-pic>p{
+    width: 0;
+    height: 0.3rem;
+    background: #09bb07;
+    font-size: 0.14rem;
+    line-height: 0.3rem;
+    color: #f7f7f7;
+    font-weight: bolder;
+  }
   .show {
     padding: 0.1rem;
     width: 1.4rem;

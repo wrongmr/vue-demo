@@ -1,5 +1,8 @@
 <template>
 <div id="login" class="login">
+  <div v-if="isLoging" class="model-div" >
+    <img src="../images/loading.gif" alt="">
+  </div>
   <div class="login-mian">
     <div>
       <div class="wx_login_log">
@@ -28,7 +31,7 @@
       </div>
     </div>
   </div>
-    <Loading v-if="isLoging" marginTop="-30%"></Loading>
+
   <div class="Mask" v-show="mask.maskshow">
     <div class="promptBox">
       <div class="promptBox-title">
@@ -45,7 +48,6 @@
   </div>
 </div>
 </template>
-
 <script>
 import Loading from './Loading.vue'
 // var emailRE = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
@@ -150,7 +152,11 @@ export default {
             username:this.username,
             password:this.password
         },{
-          emulateJSON:true
+          emulateJSON:true,
+          before:function(xhr)
+          {
+            this.isLoging = true;
+          }
         })
         .then(
           function(response){
@@ -168,6 +174,7 @@ export default {
                this.setCookie('time', response.data.data.time, expireDays);
                head === 'true';
                this.addhead();
+               this.isLoging = false;
              }
               //登录成功后
 
@@ -218,4 +225,21 @@ export default {
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
 @import "../css/login.css";
+.model-div{
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  background: #000000;
+  z-index: 11111;
+  opacity: 0.4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.model-div img{
+  width:1rem;
+  height: 1rem;
+}
 </style>
